@@ -31,6 +31,12 @@ void vc_timer(void) {
 }
 
 int main(void) {
+    int *contador = (int *)malloc(sizeof(int));
+    *contador = 0;
+    if(contador == NULL){
+        fprintf(stderr, "Erro ao alocar memória\n");
+    }
+    
     // Vídeo
     char videofile[65] = "/Users/pedroricardosilva/Desktop/Visao/visao/video_resistors.mp4";
     cv::VideoCapture capture;
