@@ -5,6 +5,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
+#include <set> // teste para contar
 
 extern "C" {
 #include "Bib.h"
@@ -87,6 +88,7 @@ int main(void) {
         // Cria uma nova imagem IVC
         IVC *image = vc_image_new(video.width, video.height, 3, 255);
         IVC *image2 = vc_image_new(video.width, video.height, 3, 255);
+        IVC *image3 = vc_image_new(video.width, video.height, 3, 255);
         IVC *imageLab = vc_image_new(video.width, video.height, 1, 255);
         IVC *imageLab2 = vc_image_new(video.width, video.height, 1, 255);
         
@@ -95,6 +97,7 @@ int main(void) {
         memcpy(image->data, frame.data, video.width * video.height * 3);
         memcpy(image2->data, frame.data, video.width * video.height * 3);
 
+        vc_rgb_to_hsv2(image3);
         vc_rgb_to_hsv2(image);
         vc_hsv_segmentation(image, 30, 250, 40, 100, 32, 100);
         vc_3chanels_to_1(image, imageLab2);
@@ -122,37 +125,60 @@ int main(void) {
         // Extração de informações dos blobs
         vc_binary_blob_infoTeste(imageLab2, blobs, nblobs);
 
+        int **listaBlobs = new int*[nblobs];
+        for (int i = 0; i < nblobs; ++i) {
+            listaBlobs[i] = new int[1]; 
+        }
         // Desenho das bounding boxes
-//        vc_draw_bounding_box(imageLab2, blobs, nblobs, 10, 10, video.nframe);
-        vc_draw_bounding_box(image2, blobs, nblobs, 0, 0, video.nframe);
+        vc_draw_bounding_box(image2, blobs, nblobs, -20, -20, video.nframe, listaBlobs, image3, contador);
+        
+              
 
-//         Apenas para realçar os labelling
-//        unsigned char* data = (unsigned char*)imageLab2->data;
-//        for (int i = 0; i < imageLab2->height; i++) {
-//            for (int j = 0; j < imageLab2->width; j++) {
-//                int pos = i * imageLab2->bytesperline + j;
-//                if (data[pos] > 0) {
-//                    data[pos] = 255;
-//                }
-//            }
-//        }
-
-//         Converter a imagem para 3 canais
-//        for (int i = 0; i < imageLab2->height; i++) {
-//            for (int j = 0; j < imageLab2->width; j++) {
-//                int pos = i * imageLab2->bytesperline + j;
-//                image2->data[pos * 3] = imageLab2->data[pos];
-//                image2->data[pos * 3 + 1] = imageLab2->data[pos];
-//                image2->data[pos * 3 + 2] = imageLab2->data[pos];
-//            }
-//        }
 
         // Copia dados de imagem da estrutura IVC para uma estrutura cv::Mat
         memcpy(frame.data, image2->data, video.width * video.height * 3);
 
         // Liberta a memória da imagem IVC que havia sido criada
-        vc_image_free(image2);
+        vc_image_free(image);
         
+        
+        
+        
+        for(int i = 0; i < nblobs; i++){
+            if(video.nframe > 716) break;
+            if(blobs[i].width > 150 &&
+               blobs[i].area > 11000 && blobs[i].area < 21000 &&
+               blobs[i].height > 80 && blobs[i].height <= 115)
+            {
+                
+                unsigned char *data_src = (unsigned char *)image2->data;
+                
+                int y_center = blobs[i].y + blobs[i].height / 2;
+                
+                // Define as informações do blob
+                std::string widthStr = "Largura: " + std::to_string(blobs[i].width) + " px";
+                std::string heightStr = "Altura: " + std::to_string(blobs[i].height) + " px";
+                std::string areaStr = "Area: " + std::to_string(blobs[i].area) + " px";
+                std::string perimeterStr = "Perimetro: " + std::to_string(blobs[i].perimeter) + " px";
+                
+                std::string x = "Valor: " + std::to_string(blobs[i].valor) + " ohms";
+
+                
+                // Define a posição base para o texto (acima da bounding box do blob)
+                int baseY = blobs[i].y - 100; // Ajuste para ter espaço para várias linhas
+                
+                // Insere o texto na imagem, linha por linha
+                cv::putText(frame, widthStr, cv::Point(blobs[i].x, baseY), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+                cv::putText(frame, heightStr, cv::Point(blobs[i].x, baseY + 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+                cv::putText(frame, areaStr, cv::Point(blobs[i].x, baseY + 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+                cv::putText(frame, perimeterStr, cv::Point(blobs[i].x, baseY + 75), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+                cv::putText(frame, x, cv::Point(blobs[i].x, baseY + 220), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+
+            }
+        }
+        
+        int conta = *contador;
+
         
         // Exemplo de inserção texto na frame
         str = std::string("RESOLUCAO: ").append(std::to_string(video.width)).append("x").append(std::to_string(video.height));
@@ -168,41 +194,10 @@ int main(void) {
         cv::putText(frame, str, cv::Point(20, 100), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
         cv::putText(frame, str, cv::Point(20, 100), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         
+        str = std::string("Contador blobs: ").append(std::to_string(conta));
+        cv::putText(frame, str, cv::Point(20, 125), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
+        cv::putText(frame, str, cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         
-        for(int i = 0; i < nblobs; i++){
-            if(video.nframe > 716) break;
-            if(blobs[i].width > 150 &&
-               blobs[i].area > 11000 && blobs[i].area < 21000 &&
-               blobs[i].height > 80 && blobs[i].height <= 115)
-            {
-                
-                
-                
-                // Define as informações do blob
-                std::string widthStr = "Largura: " + std::to_string(blobs[i].width) + " px";
-                std::string heightStr = "Altura: " + std::to_string(blobs[i].height) + " px";
-                std::string areaStr = "Area: " + std::to_string(blobs[i].area) + " px";
-                std::string perimeterStr = "Perimetro: " + std::to_string(blobs[i].perimeter) + " px";
-                
-                std::string x = "X: " + std::to_string(blobs[i].xc) + " xc do blob";
-                std::string y = "Y: " + std::to_string(blobs[i].yc) + " xYc do blob";
-
-                
-                
-                // Define a posição base para o texto (acima da bounding box do blob)
-                int baseY = blobs[i].y - 100; // Ajuste para ter espaço para várias linhas
-                
-                // Insere o texto na imagem, linha por linha
-                cv::putText(frame, widthStr, cv::Point(blobs[i].x, baseY), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, heightStr, cv::Point(blobs[i].x, baseY + 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, areaStr, cv::Point(blobs[i].x, baseY + 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, perimeterStr, cv::Point(blobs[i].x, baseY + 75), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, x, cv::Point(blobs[i].x, baseY + 220), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, y, cv::Point(blobs[i].x, baseY + 240), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-
-            }
-        }
-
         
         
 

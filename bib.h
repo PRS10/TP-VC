@@ -60,6 +60,7 @@ typedef struct {
 	int xc, yc;					// Centro-de-massa
 	int perimeter;				// Per�metro
 	int label;					// Etiqueta
+    int valor;
 } OVC;
 
 
@@ -80,7 +81,7 @@ int vc_bin_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes);
 
 int vc_3chanels_to_1 (IVC *src, IVC *dst);
 
-int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame);
+int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int **listaBlobs, IVC *teste, int *contador);
 int vc_draw_bounding_box_RGB(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int red, int green, int blue);
 int vc_draw_center_of_mass(IVC *src, OVC *blobs, int nblobs, int tamanho_alvo, int cor);
 int vc_draw_center_of_mass_RGB(IVC *src, OVC *blobs, int nblobs, int tamanho_alvo, int cor, int red, int green, int blue);
@@ -111,4 +112,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
 int vc_binary_blob_infoTeste(IVC *src, OVC *blobs, int nblobs);
 
 int vc_draw_bounding_boxTeste(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY);
+
+
+void ValoresRgb_to_hsv(unsigned char red, unsigned char green, unsigned char blue, float *h, float *s, float *v);
 

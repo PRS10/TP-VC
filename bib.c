@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 // Para as novas funções de etiquetagem
 #define MAX(a, b) (a > b ? a : b)
 #define MIN(a, b) (a < b ? a : b)
@@ -2318,7 +2319,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
 /// @param nblobs
 /// @param margem
 /// @return
-int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame)
+int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int **listaBlobs, IVC *teste, int *contador)
 {
     unsigned char *data_src = (unsigned char *)src->data;
     int width = src->width;
@@ -2344,7 +2345,11 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
            blobs[i].area > 11000 && blobs[i].area < 21000 &&
            blobs[i].height > 80 && blobs[i].height <= 115)
         {
-            
+
+
+            int preto = 0, castanho = 0, vermelho = 0, laranja = 0, amarelo = 0;
+            int verde = 0, azul = 0, violeta = 0, cinza = 0, branco = 0, dourado = 0;
+
             
             
             xmin = blobs[i].x - margemX;
@@ -2352,23 +2357,77 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
             ymin = blobs[i].y - margemY;
             ymax = blobs[i].y + blobs[i].height + margemY;
             
-            
+            int y_center = blobs[i].y + blobs[i].height / 2;
+
             // Desenha a bounding box no eixo dos x
             for (x = xmin; x <= xmax; x++)
             {
                 pos = ymin * bytesperline + x * channels;
-                data_src[pos] = 255; // Vermelho
+                data_src[pos] = 255; // Azul
                  data_src[pos + 1] = 0; // Verde
-                 data_src[pos + 2] = 0; // Azul
+                 data_src[pos + 2] = 0; // Vermelho
                 
                 pos = ymax * bytesperline + x * channels;
                 data_src[pos] = 255;
                  data_src[pos + 1] = 0;
                  data_src[pos + 2] = 0;
+                
+                // Verificação da cor dos pixels ao longo do y_center
+                pos = y_center * bytesperline + x * channels;
+//                unsigned char red = data_src[pos];
+//                unsigned char green = data_src[pos + 1];
+//                unsigned char blue = data_src[pos + 2];
+                unsigned char blue = data_src[pos];
+                unsigned char green = data_src[pos + 1];
+                unsigned char red = data_src[pos + 2];
+                
+                printf("Pixel at (x=%d, y_center=%d): Red=%d, Green=%d, Blue=%d Posição: %ld\n", x, y_center, red, green, blue, pos);
+                
+                float h, s, v;
+                ValoresRgb_to_hsv(red, green, blue, &h, &s, &v); // Troca de canais!
+                
+                s = (int)(s * 100);
+                v = (int)(v * 100);
+                
+                if(frame == 185){
+                    if(x == 299){
+                        printf(  "teste");
+                    }
+                }
+
+                // deixei o indice das cores com 1 numero a cima para fugir ao zero
+                  if ((h >= 0 && h <= 30) || (h >= 340 && h <= 360)) { // testar
+                      vermelho = 3;
+                  } else if (h >= 31 && h <= 50) { // testar
+                      laranja = 4;
+//                  } else if ((h >= 26 && h <= 35) &&) {
+//                      amarelo = 5;
+                  } else if ((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100) ) {
+                      verde = 6;
+                  } else if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)) {
+                      azul = 7;
+                  } else if (h >= 126 && h <= 160) {
+                      violeta = 8;
+                  } else if (h >= 10 && h <= 30 && v <= 100) {
+                      castanho = 2;
+                  }else if ((h > 30 && h < 60) && (s > 50) && (v > 50)){
+                      dourado = 1;
+                  }
+                  
+                
+                if(verde != 0){
+                    printf("Encontrou verde!\n");
+                }
+                
+                if(s > 100 || v > 100 ){
+                    printf("\tErro\n");
+                }
+
             }
             // Desenha a bounding box no eixo dos y
             for (y = ymin; y <= ymax; y++)
             {
+
                 pos = y * bytesperline + xmin * channels;
                 data_src[pos] = 255;
                  data_src[pos + 1] = 0;
@@ -2379,6 +2438,28 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
                  data_src[pos + 1] = 0;
                  data_src[pos + 2] = 0;
             }
+            
+                 for (int t = - 5 ; t <= 5; t++)
+                 {
+                     for (int z = - 5; z <= 5; z++)
+                     {
+                         if(t==0||z==0)
+                         {
+                             pos = (t+blobs[i].yc) * bytesperline + (z+blobs[i].xc) * channels;
+                             
+                             data_src[pos] = 255;
+                             data_src[pos + 1] = 0;
+                             data_src[pos + 2] = 0;
+                         }
+                     }
+                 }
+            
+            int valor = *contador;
+            if(blobs[i].yc >= 100 && blobs[i].yc <= 110){
+                valor++;
+            }
+            *contador = valor;
+            
         }
     }
 
@@ -2418,6 +2499,46 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
 
     return 1;
 }
+
+void ValoresRgb_to_hsv(unsigned char red, unsigned char green, unsigned char blue, float *h, float *s, float *v) {
+    float r = red / 255.0;
+    float g = green / 255.0;
+    float b = blue / 255.0;
+
+    float max = fmaxf(r, fmaxf(g, b));
+    float min = fminf(r, fminf(g, b));
+    float delta = max - min;
+
+    *v = max;
+
+    if (max == 0) {
+        *s = 0;
+        *h = 0; // undefined
+        return;
+    }
+
+    *s = delta / max;
+
+    if (delta == 0) {
+        *h = 0; // undefined
+        return;
+    }
+
+    if (max == r) {
+        *h = 60.0 * fmodf(((g - b) / delta), 6);
+    } else if (max == g) {
+        *h = 60.0 * (((b - r) / delta) + 2);
+    } else if (max == b) {
+        *h = 60.0 * (((r - g) / delta) + 4);
+    }
+
+    if (*h < 0) {
+        *h += 360.0;
+    }
+}
+
+
+
 
 int vc_draw_bounding_boxTeste(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY)
 {
