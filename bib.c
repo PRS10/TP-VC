@@ -2319,7 +2319,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
 /// @param nblobs
 /// @param margem
 /// @return
-int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int **listaBlobs, IVC *teste, int *contador)
+int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int *listaBlobs, IVC *teste, int *contador, int *contaAnalise)
 {
     unsigned char *data_src = (unsigned char *)src->data;
     int width = src->width;
@@ -2330,6 +2330,8 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
     long int pos;
     int i;
     int xmin, ymin, xmax, ymax;
+    
+    unsigned char *data_teste = (unsigned char *)teste->data;
 
     if (width <= 0 || height <= 0 || src->data == NULL)
     {
@@ -2345,19 +2347,36 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
            blobs[i].area > 11000 && blobs[i].area < 21000 &&
            blobs[i].height > 80 && blobs[i].height <= 115)
         {
-
-
-            int preto = 0, castanho = 0, vermelho = 0, laranja = 0, amarelo = 0;
-            int verde = 0, azul = 0, violeta = 0, cinza = 0, branco = 0, dourado = 0;
-
-            
-            
             xmin = blobs[i].x - margemX;
             xmax = blobs[i].x + blobs[i].width + margemX;
             ymin = blobs[i].y - margemY;
             ymax = blobs[i].y + blobs[i].height + margemY;
+
+            int preto = 0, castanho = 0, vermelho = 0, laranja = 0, amarelo = 0;
+            int verde = 0, azul = 0, violeta = 0, cinza = 0, branco = 0, dourado = 0;
+            blobs[i].ultimaCor = -1; // teste
             
-            int y_center = blobs[i].y + blobs[i].height / 2;
+            // Contar blobs
+            (blobs[i].yc >= 39 && blobs[i].yc <= 41) ? (*contador)++ : 0; // Lembrar EDA!
+
+            
+            if(*contador != *contaAnalise){
+                
+                (*contaAnalise)++;
+   
+
+            }
+
+
+
+
+
+
+            // Contar blobs fim
+            
+            
+
+        
 
             // Desenha a bounding box no eixo dos x
             for (x = xmin; x <= xmax; x++)
@@ -2371,12 +2390,12 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
                 data_src[pos] = 255;
                  data_src[pos + 1] = 0;
                  data_src[pos + 2] = 0;
+   
                 
                 // Verificação da cor dos pixels ao longo do y_center
+                int y_center = blobs[i].y + blobs[i].height / 2;
                 pos = y_center * bytesperline + x * channels;
-//                unsigned char red = data_src[pos];
-//                unsigned char green = data_src[pos + 1];
-//                unsigned char blue = data_src[pos + 2];
+
                 unsigned char blue = data_src[pos];
                 unsigned char green = data_src[pos + 1];
                 unsigned char red = data_src[pos + 2];
@@ -2389,44 +2408,130 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
                 s = (int)(s * 100);
                 v = (int)(v * 100);
                 
-                if(frame == 185){
-                    if(x == 299){
+                if(frame == 196){
+                    if(x == 360){
                         printf(  "teste");
                     }
                 }
+                
+                // Condição para o mudar de cor, procurar o amarelo que está entre as cores
+                if((h > 30 && h < 40)){
+                    blobs[i].ultimaCor = -1;
+                }
+                
+                
+                if(blobs[i].ultimaCor == -1){
+                    // Verde
+                    if((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100)){
+                        if(blobs[i].ultimaCor == -1){
+                            
+                            if(blobs[i].primeiro == 0){
+                                blobs[i].primeiro = 5;
+                                blobs[i].ultimaCor = 5;
+                            }
+                            else if(blobs[i].segundo == 0){
+                                blobs[i].segundo = 5;
+                                blobs[i].ultimaCor = 5;
+                            }
+                            else if(blobs[i].terceiro == 0){
+                                blobs[i].terceiro = 5;
+                                blobs[i].ultimaCor = 5;
+                            }
+                        }
+                    }
+                    // azul
+                    if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)){
+                        if(blobs[i].ultimaCor == -1){
+                            
+                            if(blobs[i].primeiro == 0){
+                                blobs[i].primeiro = 6;
+                                blobs[i].ultimaCor = 6;
+                            }
+                            else if(blobs[i].segundo == 0){
+                                blobs[i].segundo = 6;
+                                blobs[i].ultimaCor = 6;
+                            }
+                            else if(blobs[i].terceiro == 0){
+                                blobs[i].terceiro = 6;
+                                blobs[i].ultimaCor = 6;
+                            }
+                        }
+                    }
+                    // Vermelho
+                    if ((h > 0 && h < 30) || (h >= 340 && h <= 360)) {                        if(blobs[i].ultimaCor == -1){
+                            
+                            if(blobs[i].primeiro == 0){
+                                blobs[i].primeiro = 2;
+                                blobs[i].ultimaCor = 2;
+                            }
+                            else if(blobs[i].segundo == 0){
+                                blobs[i].segundo = 2;
+                                blobs[i].ultimaCor = 2;
+                            }
+                            else if(blobs[i].terceiro == 0){
+                                blobs[i].terceiro = 2;
+                                blobs[i].ultimaCor = 2;
+                            }
+                        }
+                    }
+                }
+                
+                // #TODO -> ajustar as cores. Está a considerar castanho como vermelho...
 
-                // deixei o indice das cores com 1 numero a cima para fugir ao zero
-                  if ((h >= 0 && h <= 30) || (h >= 340 && h <= 360)) { // testar
-                      vermelho = 3;
-                  } else if (h >= 31 && h <= 50) { // testar
-                      laranja = 4;
-//                  } else if ((h >= 26 && h <= 35) &&) {
-//                      amarelo = 5;
-                  } else if ((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100) ) {
-                      verde = 6;
-                  } else if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)) {
-                      azul = 7;
-                  } else if (h >= 126 && h <= 160) {
-                      violeta = 8;
-                  } else if (h >= 10 && h <= 30 && v <= 100) {
-                      castanho = 2;
-                  }else if ((h > 30 && h < 60) && (s > 50) && (v > 50)){
-                      dourado = 1;
-                  }
-                  
+//                // deixei o indice das cores com 1 numero a cima para fugir ao zero
+//                  if ((h >= 0 && h <= 30) || (h >= 340 && h <= 360)) { // testar
+//                      vermelho = 3;
+//                  } else if (h >= 31 && h <= 50) { // testar
+//                      laranja = 4;
+////                  } else if ((h >= 26 && h <= 35) &&) {
+////                      amarelo = 5;
+//                  } else if ((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100) ) {
+//                      verde = 6;
+//                  } else if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)) {
+//                      azul = 7;
+//                  } else if (h >= 126 && h <= 160) {
+//                      violeta = 8;
+//                  } else if ((h >= 31 && h <= 40) && v <= 50) {
+//                      castanho = 2;
+//                  }else if ((h > 41 && h < 60) && (s > 50) && (v > 50)){
+//                      dourado = 1;
+//                  }
+//                  
+//                
+//                if(verde != 0){
+//                    printf("Encontrou verde!\n");
+//                    blobs[i].valor = 6;
+//                }
+//                if(azul != 0){
+//                    printf("Encontrou azul!\n");
+//                    blobs[i].valor = 6;
+//                }
+//                if(vermelho != 0){
+//                    printf("Encontrou vermelho!\n");
+//                    blobs[i].valor = 6;
+//                }
+//                if(dourado != 0){
+//                    printf("Encontrou dourado!\n");
+//                    blobs[i].valor = 6;
+//                }
+//                if(laranja != 0){
+//                    printf("Encontrou laranja!\n");
+//                    blobs[i].valor = 6;
+//                }
+//                
+//                
+//                
+//                if(s > 100 || v > 100 ){
+//                    printf("\tErro\n");
+//                }
                 
-                if(verde != 0){
-                    printf("Encontrou verde!\n");
-                }
-                
-                if(s > 100 || v > 100 ){
-                    printf("\tErro\n");
-                }
+
 
             }
             // Desenha a bounding box no eixo dos y
             for (y = ymin; y <= ymax; y++)
             {
+                
 
                 pos = y * bytesperline + xmin * channels;
                 data_src[pos] = 255;
@@ -2454,52 +2559,15 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
                      }
                  }
             
-            int valor = *contador;
-            if(blobs[i].yc >= 100 && blobs[i].yc <= 110){
-                valor++;
-            }
-            *contador = valor;
             
         }
     }
 
-    // // Jorge, outra abordagem, talvez mais simples.
-    // loop para cada blob; loop no pela altura e largura do blob; se for igual a 0 ou a altura ou a largura, desenha a bounding box
-    // for (int i = 0; i < nblobs; i++)
-    // {
-    //     for (int y = 0; y <= blobs[i].height; y++)
-    //     {
-    //         for (int x = 0; x <= blobs[i].width; x++)
-    //         {
-    //             if(y==0||x==0||x==blobs[i].width||y == blobs[i].height)
-    //             {
-    //                 pos = (y+blobs[i].y) * bytesperline + (x+blobs[i].x) * channels;
-
-    //                 data_src[pos] = 255;
-    //             }
-
-    //         }
-    //     }
-
-    //     for (int t = - 5 ; t <= 5; t++)
-    //     {
-    //         for (int z = - 5; z <= 5; z++)
-    //         {
-    //             if(t==0||z==0)
-    //             {
-    //                 pos = (t+blobs[i].yc) * bytesperline + (z+blobs[i].xc) * channels;
-
-    //                 data_src[pos]=0;
-    //             }
-    //         }
-
-    //     }
-
-    // }
 
     return 1;
 }
 
+/// Converter valores RGB para HSV, para ser 
 void ValoresRgb_to_hsv(unsigned char red, unsigned char green, unsigned char blue, float *h, float *s, float *v) {
     float r = red / 255.0;
     float g = green / 255.0;

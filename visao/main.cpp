@@ -32,11 +32,13 @@ void vc_timer(void) {
 }
 
 int main(void) {
-    int *contador = (int *)malloc(sizeof(int));
-    *contador = 0;
-    if(contador == NULL){
-        fprintf(stderr, "Erro ao alocar memória\n");
-    }
+//    int *contador = (int *)malloc(sizeof(int));
+//    *contador = 0;
+    int contador = 0;
+    int contaAnalise = 0;
+//    if(contador == NULL){
+//        fprintf(stderr, "Erro ao alocar contador em memória\n");
+//    }
     
     // Vídeo
     char videofile[65] = "/Users/pedroricardosilva/Desktop/Visao/visao/video_resistors.mp4";
@@ -99,7 +101,9 @@ int main(void) {
 
         vc_rgb_to_hsv2(image3);
         vc_rgb_to_hsv2(image);
-        vc_hsv_segmentation(image, 30, 250, 40, 100, 32, 100);
+        vc_hsv_segmentation(image, 30, 250, 40, 100, 32, 100);//geral
+
+        
         vc_3chanels_to_1(image, imageLab2);
 
         // Converte IVC para cv::Mat
@@ -125,12 +129,10 @@ int main(void) {
         // Extração de informações dos blobs
         vc_binary_blob_infoTeste(imageLab2, blobs, nblobs);
 
-        int **listaBlobs = new int*[nblobs];
-        for (int i = 0; i < nblobs; ++i) {
-            listaBlobs[i] = new int[1]; 
-        }
+        int listaBlobs[nblobs];
+       
         // Desenho das bounding boxes
-        vc_draw_bounding_box(image2, blobs, nblobs, -20, -20, video.nframe, listaBlobs, image3, contador);
+        vc_draw_bounding_box(image2, blobs, nblobs, -20, -20, video.nframe, listaBlobs, image3, &contador, &contaAnalise);
         
               
 
@@ -161,7 +163,7 @@ int main(void) {
                 std::string areaStr = "Area: " + std::to_string(blobs[i].area) + " px";
                 std::string perimeterStr = "Perimetro: " + std::to_string(blobs[i].perimeter) + " px";
                 
-                std::string x = "Valor: " + std::to_string(blobs[i].valor) + " ohms";
+                std::string x = "Valor: " + std::to_string(blobs[i].primeiro) + std::to_string(blobs[i].segundo) + std::to_string(blobs[i].terceiro) + " ohms";
 
                 
                 // Define a posição base para o texto (acima da bounding box do blob)
@@ -177,7 +179,7 @@ int main(void) {
             }
         }
         
-        int conta = *contador;
+//        int conta = *contador;
 
         
         // Exemplo de inserção texto na frame
@@ -194,7 +196,7 @@ int main(void) {
         cv::putText(frame, str, cv::Point(20, 100), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
         cv::putText(frame, str, cv::Point(20, 100), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         
-        str = std::string("Contador blobs: ").append(std::to_string(conta));
+        str = std::string("Contador blobs: ").append(std::to_string(contador));
         cv::putText(frame, str, cv::Point(20, 125), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
         cv::putText(frame, str, cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         

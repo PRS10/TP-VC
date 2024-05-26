@@ -61,6 +61,10 @@ typedef struct {
 	int perimeter;				// Per�metro
 	int label;					// Etiqueta
     int valor;
+    int primeiro;
+    int segundo;
+    int terceiro;
+    int ultimaCor;
 } OVC;
 
 
@@ -81,7 +85,7 @@ int vc_bin_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes);
 
 int vc_3chanels_to_1 (IVC *src, IVC *dst);
 
-int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int **listaBlobs, IVC *teste, int *contador);
+int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int *listaBlobs, IVC *teste, int *contador, int *contaAnalise);
 int vc_draw_bounding_box_RGB(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int red, int green, int blue);
 int vc_draw_center_of_mass(IVC *src, OVC *blobs, int nblobs, int tamanho_alvo, int cor);
 int vc_draw_center_of_mass_RGB(IVC *src, OVC *blobs, int nblobs, int tamanho_alvo, int cor, int red, int green, int blue);
