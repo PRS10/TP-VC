@@ -1,0 +1,10 @@
+^C:\OPENCV\TP-VC\BUILD\CMAKEFILES\EC322CBD9D945332069A192F53F51D9B\GENERATE.STAMP.RULE
+setlocal
+"C:\Program Files\CMake\bin\cmake.exe" -SC:/opencv/TP-VC -BC:/opencv/TP-VC/build --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file C:/opencv/TP-VC/build/TP-VC.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

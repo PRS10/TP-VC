@@ -465,7 +465,7 @@ int contagemPixeisSup1Inf255(IVC *src, int min, int max)
     return contagem;
 }
 
-#pragma region Conversão de RGB para Gray (vc_scale_gray_to_rgb)
+#pragma region conv de RGB para Gray (vc_scale_gray_to_rgb)
 /// @brief Função de auxilio para a função vc_scale_gray_to_rgb
 /// @param data
 /// @param i
@@ -576,7 +576,7 @@ int vc_scale_gray_to_rgb(IVC *src, IVC *dst)
 
 #pragma endregion
 
-#pragma region Segmentação de imagens por theshold (Limiarização)
+#pragma region segm de imagens por theshold (limiarizacao)
 
 /// @brief Faz a conversão de uma imagem de cinzentos para binario, passando o theshold (valor) por parametros
 /// @param srcdst
@@ -2138,7 +2138,7 @@ int vc_cores_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs)
     int x, y;
     long int pos;
     int i;
-    int lables[nblobs];
+    // int lables[nblobs];
 
     if (src->height <= 0 || src->width <= 0 || src->height <= 0 || src->width <= 0 || src == NULL || dst == NULL)
     {
@@ -2160,7 +2160,7 @@ int vc_cores_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs)
                 if (datasrc[pos] == blobs[i].label)
                 {
                     datadst[pos] = (datasrc[pos] * 255) / nblobs;
-                    lables[i] = datadst[pos];
+                    // lables[i] = datadst[pos];
                 }
             }
         }
@@ -2174,10 +2174,10 @@ int vc_cores_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs)
     // }
 
     printf("Numero de blobs após = %d\n", nblobs);
-    for (int i = 0; i < nblobs; i++)
-    {
-        printf("Label %d = %d\n", i, lables[i]);
-    }
+    // for (int i = 0; i < nblobs; i++)
+    // {
+    //     printf("Label %d = %d\n", i, lables[i]);
+    // }
 
     return 1;
 }
@@ -2202,7 +2202,7 @@ int vc_bin_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
     int x, y;
     long int pos;
     int i;
-    int lables[nblobs];
+    // int lables[nblobs];
 
     if (src->height <= 0 || src->width <= 0 || src->height <= 0 || src->width <= 0 || src == NULL || dst == NULL)
     {
@@ -2226,7 +2226,7 @@ int vc_bin_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
                     if (datasrc[pos] == blobs[i].label)
                     {
                         datadst[pos] = (datasrc[pos] * 255) / nblobs;
-                        lables[i] = datadst[pos];
+                        // lables[i] = datadst[pos];
                     }
                 }
             }
@@ -2240,7 +2240,7 @@ int vc_bin_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
 
         for (int i = 0; i < nblobs; i++)
         {
-            printf("Label %d = %d\n", i, lables[i]);
+            // printf("Label %d = %d\n", i, lables[i]);
             printf("Ponto mais à esquerda %d\n", blobs[i].xc);
             printf("Area: %d", blobs[i].area);
         }
@@ -2260,7 +2260,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
     int x, y;
     long int pos;
     int i;
-    int labels[nblobs];
+    // int labels[nblobs];
 
     if (src->height <= 0 || src->width <= 0 || src->data == NULL || dst == NULL)
     {
@@ -2286,7 +2286,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
                     if (datasrc[pos] == blobs[i].label)
                     {
                         datadst[pos] = (datasrc[pos] * 255) / nblobs;
-                        labels[i] = datadst[pos];
+                        // labels[i] = datadst[pos];
                     }
                 }
             }
@@ -2299,7 +2299,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
 
         for (int i = 0; i < nblobs; i++)
         {
-            printf("Label %d = %d\n", i, labels[i]);
+            // printf("Label %d = %d\n", i, labels[i]);
             printf("Ponto mais à esquerda %d\n", blobs[i].xc);
         }
     }
