@@ -2352,37 +2352,31 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
             ymin = blobs[i].y - margemY;
             ymax = blobs[i].y + blobs[i].height + margemY;
 
-            int preto = 0, castanho = 0, vermelho = 0, laranja = 0, amarelo = 0;
-            int verde = 0, azul = 0, violeta = 0, cinza = 0, branco = 0, dourado = 0;
-            blobs[i].ultimaCor = -1; // teste
+            // Tem um numero acima daquele que foi definido no enunciado, para não termos o numero zero.
+            int preto = 1, castanho = 2, vermelho = 3, laranja = 4, amarelo = 5;
+            int verde = 6, azul = 7, violeta = 8, cinza = 9, branco = 10, dourado = 11;
+            
+            // apenas para garantir que os valores estão como o esperado
+            blobs[i].ultimaCor = -1;
+            blobs[i].primeiro = 0;
+            blobs[i].segundo = 0;
+            blobs[i].terceiro = 0;
             
             // Contar blobs
-            (blobs[i].yc >= 39 && blobs[i].yc <= 41) ? (*contador)++ : 0; // Lembrar EDA!
+            (blobs[i].yc >= 39 && blobs[i].yc <= 41) ? (*contador)++ : 0; // Lembrar EDA -> (*contador)++
 
             
+            // a ideia aqui era contar medir os blobs apenas uma vez. Ver com array bidimensional
+            // Em principio não vai dar
             if(*contador != *contaAnalise){
-                
                 (*contaAnalise)++;
-   
-
             }
-
-
-
-
-
-
-            // Contar blobs fim
             
-            
-
-        
-
             // Desenha a bounding box no eixo dos x
             for (x = xmin; x <= xmax; x++)
             {
                 pos = ymin * bytesperline + x * channels;
-                data_src[pos] = 255; // Azul
+                data_src[pos] = 255; // Azul (BGR)
                  data_src[pos + 1] = 0; // Verde
                  data_src[pos + 2] = 0; // Vermelho
                 
@@ -2394,137 +2388,133 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
                 
                 // Verificação da cor dos pixels ao longo do y_center
                 int y_center = blobs[i].y + blobs[i].height / 2;
-                pos = y_center * bytesperline + x * channels;
-
+//                pos = y_center * bytesperline + x * channels;
+                pos = blobs[i].yc * bytesperline + (x ) * channels; // queremos a posicao yc a comecar no x
+                
                 unsigned char blue = data_src[pos];
                 unsigned char green = data_src[pos + 1];
                 unsigned char red = data_src[pos + 2];
                 
-                printf("Pixel at (x=%d, y_center=%d): Red=%d, Green=%d, Blue=%d Posição: %ld\n", x, y_center, red, green, blue, pos);
+                printf("Pixel at (yc = %d) (x-marg=%d, y_center=%d): Red=%d, Green=%d, Blue=%d Posição: %ld\n",blobs[i].yc, x-margemX, y_center, red, green, blue, pos);
                 
                 float h, s, v;
                 ValoresRgb_to_hsv(red, green, blue, &h, &s, &v); // Troca de canais!
                 
-                s = (int)(s * 100);
+                s = (int)(s * 100); // de 0 a 100%
                 v = (int)(v * 100);
                 
-                if(frame == 196){
-                    if(x == 360){
-                        printf(  "teste");
-                    }
+                if(frame == 443){ // apenas para testar
+                    printf("\n ultimaPosicao %d \n", blobs[i].ultimaCor);
+                    printf("\n promeiro %d \n", blobs[i].primeiro);
+                    printf("\n segundo %d \n", blobs[i].segundo);
+                    printf("\n terceiro %d \n", blobs[i].terceiro);
                 }
                 
                 // Condição para o mudar de cor, procurar o amarelo que está entre as cores
                 if((h > 30 && h < 40)){
                     blobs[i].ultimaCor = -1;
                 }
-                
-                
+                printf("Valor de i=%d \n", i);
+
                 if(blobs[i].ultimaCor == -1){
-                    // Verde
-                    if((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100)){
+                    
+                    // Preto -> 0
+                    if(s > 0 && s <= 20 && v < 25){ // && brilho superior que 40?
                         if(blobs[i].ultimaCor == -1){
                             
                             if(blobs[i].primeiro == 0){
-                                blobs[i].primeiro = 5;
-                                blobs[i].ultimaCor = 5;
+                                blobs[i].primeiro = preto;
+                                blobs[i].ultimaCor = preto;
                             }
                             else if(blobs[i].segundo == 0){
-                                blobs[i].segundo = 5;
-                                blobs[i].ultimaCor = 5;
+                                blobs[i].segundo = preto;
+                                blobs[i].ultimaCor = preto;
                             }
                             else if(blobs[i].terceiro == 0){
-                                blobs[i].terceiro = 5;
-                                blobs[i].ultimaCor = 5;
+                                blobs[i].terceiro = preto;
+                                blobs[i].ultimaCor = preto;
                             }
                         }
                     }
-                    // azul
-                    if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)){
+                    // Verde -> 5
+                    if((h >= 80 && h <= 120) && (s > 0 && s < 100) && (v > 27 && v < 100)){
                         if(blobs[i].ultimaCor == -1){
                             
                             if(blobs[i].primeiro == 0){
-                                blobs[i].primeiro = 6;
-                                blobs[i].ultimaCor = 6;
+                                blobs[i].primeiro = verde;
+                                blobs[i].ultimaCor = verde;
                             }
                             else if(blobs[i].segundo == 0){
-                                blobs[i].segundo = 6;
-                                blobs[i].ultimaCor = 6;
+                                blobs[i].segundo = verde;
+                                blobs[i].ultimaCor = verde;
                             }
                             else if(blobs[i].terceiro == 0){
-                                blobs[i].terceiro = 6;
-                                blobs[i].ultimaCor = 6;
+                                blobs[i].terceiro = verde;
+                                blobs[i].ultimaCor = verde;
                             }
                         }
                     }
-                    // Vermelho
-                    if ((h > 0 && h < 30) || (h >= 340 && h <= 360)) {                        if(blobs[i].ultimaCor == -1){
+                    // azul -> 6
+                    if ((h >= 170 && h <= 220) &&  (v > 30 && v < 100)){
+                        if(blobs[i].ultimaCor == -1){
                             
                             if(blobs[i].primeiro == 0){
-                                blobs[i].primeiro = 2;
-                                blobs[i].ultimaCor = 2;
+                                blobs[i].primeiro = azul;
+                                blobs[i].ultimaCor = azul;
                             }
                             else if(blobs[i].segundo == 0){
-                                blobs[i].segundo = 2;
-                                blobs[i].ultimaCor = 2;
+                                blobs[i].segundo = azul;
+                                blobs[i].ultimaCor = azul;
                             }
                             else if(blobs[i].terceiro == 0){
-                                blobs[i].terceiro = 2;
-                                blobs[i].ultimaCor = 2;
+                                blobs[i].terceiro = azul;
+                                blobs[i].ultimaCor = azul;
                             }
                         }
                     }
+                    // Vermelho -> 2
+                    if (( (h > 0 && h < 20) || (h >= 300 && h <= 360) ) && (s > 20)) {
+                        if(blobs[i].ultimaCor == -1){
+                            if(s > 55 && v > 55){
+                                // vermelho
+                                if(blobs[i].primeiro == 0){
+                                    blobs[i].primeiro = vermelho;
+                                    blobs[i].ultimaCor = vermelho;
+                                }
+                                else if(blobs[i].segundo == 0){
+                                    blobs[i].segundo = vermelho;
+                                    blobs[i].ultimaCor = vermelho;
+                                }
+                                else if(blobs[i].terceiro == 0){
+                                    blobs[i].terceiro = vermelho;
+                                    blobs[i].ultimaCor = vermelho;
+                                }
+                            }else if (s < 55 && v < 55){
+                                // castanho
+                                if(blobs[i].primeiro == 0){
+                                    blobs[i].primeiro = castanho;
+                                    blobs[i].ultimaCor = castanho;
+                                }
+                                else if(blobs[i].segundo == 0){
+                                    blobs[i].segundo = castanho;
+                                    blobs[i].ultimaCor = castanho;
+                                }
+                                else if(blobs[i].terceiro == 0){
+                                    blobs[i].terceiro = castanho;
+                                    blobs[i].ultimaCor = castanho;
+                                }
+                            }
+
+                            
+                        }
+                    }
+
+
+
+                    
                 }
                 
                 // #TODO -> ajustar as cores. Está a considerar castanho como vermelho...
-
-//                // deixei o indice das cores com 1 numero a cima para fugir ao zero
-//                  if ((h >= 0 && h <= 30) || (h >= 340 && h <= 360)) { // testar
-//                      vermelho = 3;
-//                  } else if (h >= 31 && h <= 50) { // testar
-//                      laranja = 4;
-////                  } else if ((h >= 26 && h <= 35) &&) {
-////                      amarelo = 5;
-//                  } else if ((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100) ) {
-//                      verde = 6;
-//                  } else if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)) {
-//                      azul = 7;
-//                  } else if (h >= 126 && h <= 160) {
-//                      violeta = 8;
-//                  } else if ((h >= 31 && h <= 40) && v <= 50) {
-//                      castanho = 2;
-//                  }else if ((h > 41 && h < 60) && (s > 50) && (v > 50)){
-//                      dourado = 1;
-//                  }
-//                  
-//                
-//                if(verde != 0){
-//                    printf("Encontrou verde!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(azul != 0){
-//                    printf("Encontrou azul!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(vermelho != 0){
-//                    printf("Encontrou vermelho!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(dourado != 0){
-//                    printf("Encontrou dourado!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(laranja != 0){
-//                    printf("Encontrou laranja!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                
-//                
-//                
-//                if(s > 100 || v > 100 ){
-//                    printf("\tErro\n");
-//                }
-                
 
 
             }

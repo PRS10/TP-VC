@@ -75,6 +75,9 @@ int main(void) {
 
     // Inicia o timer
     vc_timer();
+    std::string outputVideoFile = "/Users/pedroricardosilva/Desktop/Visao/visao/output_video.avi";
+    cv::VideoWriter outputVideo;
+    outputVideo.open(outputVideoFile, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), video.fps, cv::Size(video.width, video.height));
 
     cv::Mat frame;
     while (key != 'q') {
@@ -153,27 +156,28 @@ int main(void) {
                blobs[i].height > 80 && blobs[i].height <= 115)
             {
                 
-                unsigned char *data_src = (unsigned char *)image2->data;
-                
-                int y_center = blobs[i].y + blobs[i].height / 2;
                 
                 // Define as informações do blob
-                std::string widthStr = "Largura: " + std::to_string(blobs[i].width) + " px";
-                std::string heightStr = "Altura: " + std::to_string(blobs[i].height) + " px";
-                std::string areaStr = "Area: " + std::to_string(blobs[i].area) + " px";
-                std::string perimeterStr = "Perimetro: " + std::to_string(blobs[i].perimeter) + " px";
+//                std::string widthStr = "Largura: " + std::to_string(blobs[i].width) + " px";
+//                std::string heightStr = "Altura: " + std::to_string(blobs[i].height) + " px";
+//                std::string areaStr = "Area: " + std::to_string(blobs[i].area) + " px";
+//                std::string perimeterStr = "Perimetro: " + std::to_string(blobs[i].perimeter) + " px";
+
+                int n = blobs[i].terceiro;
                 
-                std::string x = "Valor: " + std::to_string(blobs[i].primeiro) + std::to_string(blobs[i].segundo) + std::to_string(blobs[i].terceiro) + " ohms";
+                std::string terceiro(n, '0');// converter para 'zeros' o mesmo numero de vezes que o terceiro tem.
+
+                std::string x = "Valor: " + std::to_string(blobs[i].primeiro - 1) + std::to_string(blobs[i].segundo - 1) + terceiro + " ohms"; 
 
                 
                 // Define a posição base para o texto (acima da bounding box do blob)
                 int baseY = blobs[i].y - 100; // Ajuste para ter espaço para várias linhas
                 
                 // Insere o texto na imagem, linha por linha
-                cv::putText(frame, widthStr, cv::Point(blobs[i].x, baseY), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, heightStr, cv::Point(blobs[i].x, baseY + 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, areaStr, cv::Point(blobs[i].x, baseY + 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, perimeterStr, cv::Point(blobs[i].x, baseY + 75), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+//                cv::putText(frame, widthStr, cv::Point(blobs[i].x, baseY), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+//                cv::putText(frame, heightStr, cv::Point(blobs[i].x, baseY + 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+//                cv::putText(frame, areaStr, cv::Point(blobs[i].x, baseY + 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+//                cv::putText(frame, perimeterStr, cv::Point(blobs[i].x, baseY + 75), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
                 cv::putText(frame, x, cv::Point(blobs[i].x, baseY + 220), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
 
             }
@@ -183,12 +187,12 @@ int main(void) {
 
         
         // Exemplo de inserção texto na frame
-        str = std::string("RESOLUCAO: ").append(std::to_string(video.width)).append("x").append(std::to_string(video.height));
-        cv::putText(frame, str, cv::Point(20, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
-        cv::putText(frame, str, cv::Point(20, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 0, 0), 1);
-        str = std::string("TOTAL DE FRAMES: ").append(std::to_string(video.ntotalframes));
-        cv::putText(frame, str, cv::Point(20, 50), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
-        cv::putText(frame, str, cv::Point(20, 50), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
+//        str = std::string("RESOLUCAO: ").append(std::to_string(video.width)).append("x").append(std::to_string(video.height));
+//        cv::putText(frame, str, cv::Point(20, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
+//        cv::putText(frame, str, cv::Point(20, 25), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 0, 0), 1);
+//        str = std::string("TOTAL DE FRAMES: ").append(std::to_string(video.ntotalframes));
+//        cv::putText(frame, str, cv::Point(20, 50), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
+//        cv::putText(frame, str, cv::Point(20, 50), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         str = std::string("FRAME RATE: ").append(std::to_string(video.fps));
         cv::putText(frame, str, cv::Point(20, 75), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
         cv::putText(frame, str, cv::Point(20, 75), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
@@ -196,7 +200,7 @@ int main(void) {
         cv::putText(frame, str, cv::Point(20, 100), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
         cv::putText(frame, str, cv::Point(20, 100), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         
-        str = std::string("Contador blobs: ").append(std::to_string(contador));
+        str = std::string("Contador resistencias: ").append(std::to_string(contador));
         cv::putText(frame, str, cv::Point(20, 125), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 0), 2);
         cv::putText(frame, str, cv::Point(20, 120), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(255, 255, 255), 1);
         
@@ -211,6 +215,7 @@ int main(void) {
         
         // Exibe a frame
         cv::imshow("VC - VIDEO", frame);
+        outputVideo.write(frame);
 
         // Sai da aplicação, se o utilizador premir a tecla 'q'
         key = cv::waitKey(1);
