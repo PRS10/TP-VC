@@ -85,7 +85,7 @@ int vc_bin_labels(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes);
 
 int vc_3chanels_to_1 (IVC *src, IVC *dst);
 
-int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int *listaBlobs, IVC *teste, int *contador, int *contaAnalise);
+int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int *contador);
 int vc_draw_bounding_box_RGB(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int red, int green, int blue);
 int vc_draw_center_of_mass(IVC *src, OVC *blobs, int nblobs, int tamanho_alvo, int cor);
 int vc_draw_center_of_mass_RGB(IVC *src, OVC *blobs, int nblobs, int tamanho_alvo, int cor, int red, int green, int blue);
@@ -108,6 +108,10 @@ int vc_gray_edge_prewitt(IVC *src, IVC *dst, float th);
 
 int vc_hsv_segmentationmetade(IVC *src, int hmin, int hmax, int smin,
                               int smax, int vmin, int vmax);
+int vc_hsv_segmentation_retornaImag(IVC *src, IVC *dst ,int hmin, int hmax, int smin,
+                                    int smax, int vmin, int vmax);
+
+
 int vc_binary_erodeCentro(IVC *src, IVC *dst, int kernel);
 int vc_binary_dilateCentro(IVC *src, IVC *dst, int kernel);
 
@@ -117,6 +121,7 @@ int vc_binary_blob_infoTeste(IVC *src, OVC *blobs, int nblobs);
 
 int vc_draw_bounding_boxTeste(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY);
 
-
+int vc_analise_cores(OVC *blobs, int i, IVC *src, int x );
 void ValoresRgb_to_hsv(unsigned char red, unsigned char green, unsigned char blue, float *h, float *s, float *v);
+int vc_cor_encontrada(OVC *blobs, int i, int cor);
 

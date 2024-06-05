@@ -32,13 +32,9 @@ void vc_timer(void) {
 }
 
 int main(void) {
-//    int *contador = (int *)malloc(sizeof(int));
-//    *contador = 0;
+    // Inicia contador, a ser utilizado na contagem das resistencias
     int contador = 0;
-    int contaAnalise = 0;
-//    if(contador == NULL){
-//        fprintf(stderr, "Erro ao alocar contador em memória\n");
-//    }
+
     
     // Vídeo
     char videofile[65] = "C:/opencv/TP-VC/video_resistors.mp4";
@@ -72,9 +68,19 @@ int main(void) {
 
     // Cria uma janela para exibir o vídeo
     cv::namedWindow("VC - VIDEO", cv::WINDOW_AUTOSIZE);
+    
+    // Cria uma nova imagem IVC
+    IVC *image = vc_image_new(video.width, video.height, 3, 255);
+    IVC *image2 = vc_image_new(video.width, video.height, 3, 255);
+    IVC *imageLab = vc_image_new(video.width, video.height, 1, 255);
+    IVC *imageLab2 = vc_image_new(video.width, video.height, 1, 255);
 
     // Inicia o timer
     vc_timer();
+//    std::string outputVideoFile = "/Users/pedroricardosilva/Desktop/Visao/visao/output_video.avi";
+//    cv::VideoWriter outputVideo;
+//    outputVideo.open(outputVideoFile, cv::VideoWriter::fourcc('M', 'J', 'P', 'G'), video.fps, cv::Size(video.width, video.height));
+
 
     cv::Mat frame;
     while (key != 'q') {
@@ -87,39 +93,30 @@ int main(void) {
         // Número da frame a processar
         video.nframe = (int)capture.get(cv::CAP_PROP_POS_FRAMES);
 
-        // Cria uma nova imagem IVC
-        IVC *image = vc_image_new(video.width, video.height, 3, 255);
-        IVC *image2 = vc_image_new(video.width, video.height, 3, 255);
-        IVC *image3 = vc_image_new(video.width, video.height, 3, 255);
-        IVC *imageLab = vc_image_new(video.width, video.height, 1, 255);
-        IVC *imageLab2 = vc_image_new(video.width, video.height, 1, 255);
-        
-
         // Copia dados de imagem da estrutura cv::Mat para uma estrutura IVC
         memcpy(image->data, frame.data, video.width * video.height * 3);
         memcpy(image2->data, frame.data, video.width * video.height * 3);
 
-        vc_rgb_to_hsv2(image3);
-        vc_rgb_to_hsv2(image);
-        vc_hsv_segmentation(image, 30, 250, 40, 100, 32, 100);//geral
-
+        vc_rgb_to_hsv(image);// BGR!!
         
-        vc_3chanels_to_1(image, imageLab2);
 
+        vc_hsv_segmentation_retornaImag(image, imageLab2, 0, 200, 40, 50, 32, 80); // Foi o possivel...
+
+#pragma region Dilatacao_OpenCv
         // Converte IVC para cv::Mat
         cv::Mat matImageLab2(video.height, video.width, CV_8UC1, imageLab2->data);
         cv::Mat matDilated;
 
         // Cria um elemento estruturante (kernel)
-        int kernelSize = 41;
+        int kernelSize = 41; // é muito, mas necessario com esta segmentação
         cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(kernelSize, kernelSize));
 
-        // Aplica a função cv::dilate
+        // Aplica a função cv::dilate (https://docs.opencv.org/3.4/db/df6/tutorial_erosion_dilatation.html)
         cv::dilate(matImageLab2, matDilated, kernel);
 
         // Converte de volta para IVC
         memcpy(imageLab->data, matDilated.data, video.width * video.height);
-
+#pragma endregion
         
 
         // Processo de detecção de blobs
@@ -129,21 +126,18 @@ int main(void) {
         // Extração de informações dos blobs
         vc_binary_blob_infoTeste(imageLab2, blobs, nblobs);
 
-        std::vector<int> listaBlobs(nblobs);
+        int listaBlobs[nblobs];
        
         // Desenho das bounding boxes
-        vc_draw_bounding_box(image2, blobs, nblobs, -20, -20, video.nframe, listaBlobs.data(), image3, &contador, &contaAnalise);
+        vc_draw_bounding_box(image2, blobs, nblobs, -20, -20, video.nframe, listaBlobs, image3, &contador, &contaAnalise);
         
+              
+
 
         // Copia dados de imagem da estrutura IVC para uma estrutura cv::Mat
         memcpy(frame.data, image2->data, video.width * video.height * 3);
 
-        // Liberta a memória da imagem IVC que havia sido criada
-        vc_image_free(image);
-        
-        
-        
-        
+        // Loop pelos blobs para escrever valores
         for(int i = 0; i < nblobs; i++){
             if(video.nframe > 716) break;
             if(blobs[i].width > 150 &&
@@ -151,28 +145,15 @@ int main(void) {
                blobs[i].height > 80 && blobs[i].height <= 115)
             {
                 
-                unsigned char *data_src = (unsigned char *)image2->data;
-                
-                int y_center = blobs[i].y + blobs[i].height / 2;
-                
-                // Define as informações do blob
-                std::string widthStr = "Largura: " + std::to_string(blobs[i].width) + " px";
-                std::string heightStr = "Altura: " + std::to_string(blobs[i].height) + " px";
-                std::string areaStr = "Area: " + std::to_string(blobs[i].area) + " px";
-                std::string perimeterStr = "Perimetro: " + std::to_string(blobs[i].perimeter) + " px";
-                
-                std::string x = "Valor: " + std::to_string(blobs[i].primeiro) + std::to_string(blobs[i].segundo) + std::to_string(blobs[i].terceiro) + " ohms";
+                std::string terceiro((blobs[i].terceiro), '0');// converter para 'zeros' o mesmo numero de vezes que o terceiro tem.
 
-                
+                std::string valor = "Valor: " + std::to_string(blobs[i].primeiro - 1) + std::to_string(blobs[i].segundo - 1) + terceiro + " +/-5% ohms";
+
                 // Define a posição base para o texto (acima da bounding box do blob)
                 int baseY = blobs[i].y - 100; // Ajuste para ter espaço para várias linhas
                 
                 // Insere o texto na imagem, linha por linha
-                cv::putText(frame, widthStr, cv::Point(blobs[i].x, baseY), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, heightStr, cv::Point(blobs[i].x, baseY + 25), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, areaStr, cv::Point(blobs[i].x, baseY + 50), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, perimeterStr, cv::Point(blobs[i].x, baseY + 75), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
-                cv::putText(frame, x, cv::Point(blobs[i].x, baseY + 220), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
+                cv::putText(frame, valor, cv::Point(blobs[i].x, baseY + 220), cv::FONT_HERSHEY_SIMPLEX, 1, cv::Scalar(0, 0, 255), 1);
 
             }
         }
@@ -202,30 +183,35 @@ int main(void) {
         
 
         // Salva a imagem com a resolução sobreposta se a condição for atendida
-            //std::string filename = "frame" + std::to_string(video.nframe) + ".jpg";
-            //imwrite(filename, frame);
+            std::string filename = "/Users/pedroricardosilva/Desktop/Visao/visao/Prints/frame" + std::to_string(video.nframe) + ".jpg";
+            imwrite(filename, frame);
         
         
-        
+
         // Exibe a frame
         cv::imshow("VC - VIDEO", frame);
+//        outputVideo.write(frame); // Gravar video para o disco.
 
         // Sai da aplicação, se o utilizador premir a tecla 'q'
         key = cv::waitKey(1);
     }
+    
+
 
     // Para o timer e exibe o tempo decorrido
     vc_timer();
-
+    
+    // Liberta a memória da imagem IVC, não melhorou muito por fora do while loop, mas faz mais sentido aqui.
+    vc_image_free(image);
+    vc_image_free(image2);
+    vc_image_free(imageLab);
+    vc_image_free(imageLab2);
+    
     // Fecha a janela
     cv::destroyWindow("VC - VIDEO");
 
     // Fecha o ficheiro de vídeo
     capture.release();
-
     return 0;
 }
-
-
-// Funçao para segmentar e identificar os blobs
 

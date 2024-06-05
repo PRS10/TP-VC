@@ -345,6 +345,7 @@ int vc_hsv_segmentation(IVC *src, int hmin, int hmax, int smin,
             data[i] = 255;
             data[i + 1] = 255;
             data[i + 2] = 255;
+            
         }
         else
         {
@@ -355,6 +356,50 @@ int vc_hsv_segmentation(IVC *src, int hmin, int hmax, int smin,
     }
     return 1;
 }
+
+
+int vc_hsv_segmentation_retornaImag(IVC *src, IVC *dst, int hmin, int hmax, int smin,
+                        int smax, int vmin, int vmax)
+{
+    unsigned char *data_src = (unsigned char *)src->data;
+    unsigned char *data_dst = (unsigned char *)dst->data;
+    int width = src->width;
+    int height = src->height;
+    int channels_src = src->channels;
+    int channels_dst = dst->channels;
+    float h, s, v;
+    int i, j, size_src, size_dst;
+
+    if ((src->width) <= 0 || (src->height) <= 0 || (src->data == NULL) || (dst->data == NULL))
+        return 0;
+    if (src->channels != 3 || dst->channels != 1)
+        return 0;
+
+    size_src = width * height * channels_src;
+    size_dst = width * height * channels_dst;
+
+    if (size_dst != (width * height))
+        return 0;
+
+    for (i = 0, j = 0; i < size_src; i += channels_src, j += channels_dst)
+    {
+        h = (float)data_src[i] * 360.0f / 255.0f;
+        s = (float)data_src[i + 1] * 100.0f / 255.0f;
+        v = (float)data_src[i + 2] * 100.0f / 255.0f;
+
+        if (h >= hmin && h <= hmax && s >= smin && s <= smax && v >= vmin && v <= vmax)
+        {
+            data_dst[j] = 255;
+        }
+        else
+        {
+            data_dst[j] = 0;
+        }
+    }
+    return 1;
+}
+
+
 
 int vc_hsv_segmentationmetade(IVC *src, int hmin, int hmax, int smin, int smax, int vmin, int vmax)
 {
@@ -1491,7 +1536,6 @@ OVC *vc_binary_blob_labelling(IVC *src, IVC *dst, int *nlabels)
     long int i, size;
     long int posX, posA, posB, posC, posD;
     int labeltable[256] = {0};
-    int labelarea[256] = {0};
     int label = 1; // Etiqueta inicial.
     int num, tmplabel;
     OVC *blobs; // Apontador para array de blobs (objectos) que ser� retornado desta fun��o.
@@ -1514,11 +1558,11 @@ OVC *vc_binary_blob_labelling(IVC *src, IVC *dst, int *nlabels)
         return 0; // Estava NULL
     }
 
-//    if (channels != 1)
-//    { // apenas para imagens binárias; valor oficial é um!!
-//        printf("(vc_binary_blob_labelling) Canais diferentes de 1\n");
-//        return NULL;
-//    }
+    if (channels != 1)
+    { // apenas para imagens binárias; valor oficial é um!!
+        printf("(vc_binary_blob_labelling) Canais diferentes de 1\n");
+        return NULL;
+    }
     // Copia dados da imagem bin�ria para imagem grayscale
     memcpy(datadst, datasrc, bytesperline * height);
 
@@ -2319,7 +2363,7 @@ int vc_bin_labelsTeste(IVC *src, IVC *dst, int nblobs, OVC *blobs, int detalhes)
 /// @param nblobs
 /// @param margem
 /// @return
-int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int *listaBlobs, IVC *teste, int *contador, int *contaAnalise)
+int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int margemY, int frame, int *contador)
 {
     unsigned char *data_src = (unsigned char *)src->data;
     int width = src->width;
@@ -2331,7 +2375,6 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
     int i;
     int xmin, ymin, xmax, ymax;
     
-    unsigned char *data_teste = (unsigned char *)teste->data;
 
     if (width <= 0 || height <= 0 || src->data == NULL)
     {
@@ -2352,182 +2395,40 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
             ymin = blobs[i].y - margemY;
             ymax = blobs[i].y + blobs[i].height + margemY;
 
-            int preto = 0, castanho = 0, vermelho = 0, laranja = 0, amarelo = 0;
-            int verde = 0, azul = 0, violeta = 0, cinza = 0, branco = 0, dourado = 0;
-            blobs[i].ultimaCor = -1; // teste
+
+            // apenas para garantir que os valores estão como o esperado
+            blobs[i].ultimaCor = -1;
+            blobs[i].primeiro = 0;
+            blobs[i].segundo = 0;
+            blobs[i].terceiro = 0;
             
-            // Contar blobs
-            (blobs[i].yc >= 39 && blobs[i].yc <= 41) ? (*contador)++ : 0; // Lembrar EDA!
-
-            
-            if(*contador != *contaAnalise){
-                
-                (*contaAnalise)++;
-   
-
-            }
-
-
-
-
-
-
-            // Contar blobs fim
+            // Contar blobs, está posicionado o mais a cima da imagem possivel e num intervalo onde passem
+            // todos os blobs, mas sem se repetirem
+            (blobs[i].yc > 40 && blobs[i].yc <= 43) || blobs[i].yc == 47 ? (*contador)++ : 0;
+            // Lembrar EDA -> (*contador)++
             
             
-
-        
-
             // Desenha a bounding box no eixo dos x
             for (x = xmin; x <= xmax; x++)
             {
+#pragma region caixa
+                // linha superior do blob
                 pos = ymin * bytesperline + x * channels;
-                data_src[pos] = 255; // Azul
-                 data_src[pos + 1] = 0; // Verde
-                 data_src[pos + 2] = 0; // Vermelho
-                
+                data_src[pos] = 255; // Azul (BGR)
+                data_src[pos + 1] = 0; // Verde
+                data_src[pos + 2] = 0; // Vermelho
+                // Linha inferior do blob
                 pos = ymax * bytesperline + x * channels;
                 data_src[pos] = 255;
-                 data_src[pos + 1] = 0;
-                 data_src[pos + 2] = 0;
-   
+                data_src[pos + 1] = 0;
+                data_src[pos + 2] = 0;
+#pragma endregion
                 
-                // Verificação da cor dos pixels ao longo do y_center
-                int y_center = blobs[i].y + blobs[i].height / 2;
-                pos = y_center * bytesperline + x * channels;
-
-                unsigned char blue = data_src[pos];
-                unsigned char green = data_src[pos + 1];
-                unsigned char red = data_src[pos + 2];
-                
-                printf("Pixel at (x=%d, y_center=%d): Red=%d, Green=%d, Blue=%d Posição: %ld\n", x, y_center, red, green, blue, pos);
-                
-                float h, s, v;
-                ValoresRgb_to_hsv(red, green, blue, &h, &s, &v); // Troca de canais!
-                
-                s = (int)(s * 100);
-                v = (int)(v * 100);
-                
-                if(frame == 196){
-                    if(x == 360){
-                        printf(  "teste");
-                    }
-                }
-                
-                // Condição para o mudar de cor, procurar o amarelo que está entre as cores
-                if((h > 30 && h < 40)){
-                    blobs[i].ultimaCor = -1;
-                }
-                
-                
-                if(blobs[i].ultimaCor == -1){
-                    // Verde
-                    if((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100)){
-                        if(blobs[i].ultimaCor == -1){
-                            
-                            if(blobs[i].primeiro == 0){
-                                blobs[i].primeiro = 5;
-                                blobs[i].ultimaCor = 5;
-                            }
-                            else if(blobs[i].segundo == 0){
-                                blobs[i].segundo = 5;
-                                blobs[i].ultimaCor = 5;
-                            }
-                            else if(blobs[i].terceiro == 0){
-                                blobs[i].terceiro = 5;
-                                blobs[i].ultimaCor = 5;
-                            }
-                        }
-                    }
-                    // azul
-                    if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)){
-                        if(blobs[i].ultimaCor == -1){
-                            
-                            if(blobs[i].primeiro == 0){
-                                blobs[i].primeiro = 6;
-                                blobs[i].ultimaCor = 6;
-                            }
-                            else if(blobs[i].segundo == 0){
-                                blobs[i].segundo = 6;
-                                blobs[i].ultimaCor = 6;
-                            }
-                            else if(blobs[i].terceiro == 0){
-                                blobs[i].terceiro = 6;
-                                blobs[i].ultimaCor = 6;
-                            }
-                        }
-                    }
-                    // Vermelho
-                    if ((h > 0 && h < 30) || (h >= 340 && h <= 360)) {                        if(blobs[i].ultimaCor == -1){
-                            
-                            if(blobs[i].primeiro == 0){
-                                blobs[i].primeiro = 2;
-                                blobs[i].ultimaCor = 2;
-                            }
-                            else if(blobs[i].segundo == 0){
-                                blobs[i].segundo = 2;
-                                blobs[i].ultimaCor = 2;
-                            }
-                            else if(blobs[i].terceiro == 0){
-                                blobs[i].terceiro = 2;
-                                blobs[i].ultimaCor = 2;
-                            }
-                        }
-                    }
-                }
-                
-                // #TODO -> ajustar as cores. Está a considerar castanho como vermelho...
-
-//                // deixei o indice das cores com 1 numero a cima para fugir ao zero
-//                  if ((h >= 0 && h <= 30) || (h >= 340 && h <= 360)) { // testar
-//                      vermelho = 3;
-//                  } else if (h >= 31 && h <= 50) { // testar
-//                      laranja = 4;
-////                  } else if ((h >= 26 && h <= 35) &&) {
-////                      amarelo = 5;
-//                  } else if ((h >= 70 && h <= 130) && (s > 30 && s < 100) && (v > 30 && v < 100) ) {
-//                      verde = 6;
-//                  } else if ((h >= 180 && h <= 280) && (s > 30 && s < 100) && (v > 30 && v < 100)) {
-//                      azul = 7;
-//                  } else if (h >= 126 && h <= 160) {
-//                      violeta = 8;
-//                  } else if ((h >= 31 && h <= 40) && v <= 50) {
-//                      castanho = 2;
-//                  }else if ((h > 41 && h < 60) && (s > 50) && (v > 50)){
-//                      dourado = 1;
-//                  }
-//                  
-//                
-//                if(verde != 0){
-//                    printf("Encontrou verde!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(azul != 0){
-//                    printf("Encontrou azul!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(vermelho != 0){
-//                    printf("Encontrou vermelho!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(dourado != 0){
-//                    printf("Encontrou dourado!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                if(laranja != 0){
-//                    printf("Encontrou laranja!\n");
-//                    blobs[i].valor = 6;
-//                }
-//                
-//                
-//                
-//                if(s > 100 || v > 100 ){
-//                    printf("\tErro\n");
-//                }
-                
-
+                // Onde a magia acontece (espera-se isso bha)
+                vc_analise_cores(blobs, i, src, x);
 
             }
+            
             // Desenha a bounding box no eixo dos y
             for (y = ymin; y <= ymax; y++)
             {
@@ -2544,26 +2445,107 @@ int vc_draw_bounding_box(IVC *src, OVC *blobs, int nblobs, int margemX, int marg
                  data_src[pos + 2] = 0;
             }
             
-                 for (int t = - 5 ; t <= 5; t++)
+            // Desenha o 'alvo'
+             for (int t = - 5 ; t <= 5; t++)
+             {
+                 for (int z = - 5; z <= 5; z++)
                  {
-                     for (int z = - 5; z <= 5; z++)
+                     if(t==0||z==0)
                      {
-                         if(t==0||z==0)
-                         {
-                             pos = (t+blobs[i].yc) * bytesperline + (z+blobs[i].xc) * channels;
-                             
-                             data_src[pos] = 255;
-                             data_src[pos + 1] = 0;
-                             data_src[pos + 2] = 0;
-                         }
+                         pos = (t+blobs[i].yc) * bytesperline + (z+blobs[i].xc) * channels;
+                         data_src[pos] = 255; // BGR
+                         data_src[pos + 1] = 0;
+                         data_src[pos + 2] = 0;
                      }
                  }
+             }
             
             
         }
     }
 
 
+    return 1;
+}
+
+
+// O objetivo é analizar o blob no eixo do x para conseguir detetar as cores das resistencias
+int vc_analise_cores(OVC *blobs, int i, IVC *src, int x ){
+    unsigned char *data_src = src->data;
+    int width = src->width;
+    int channels = src->channels;
+    int bytesperline = width * channels;    
+    
+    // Tem um numero acima daquele que foi definido no enunciado, para não termos o numero zero.
+    int preto = 1, castanho = 2, vermelho = 3, laranja = 4, amarelo = 5;
+    int verde = 6, azul = 7, violeta = 8, cinza = 9, branco = 10, dourado = 11;
+    
+    
+    // Verificação da cor dos pixels ao longo do y_center
+//    int y_center = blobs[i].y + blobs[i].height / 2; // apenas para testar
+    long int pos = blobs[i].yc * bytesperline + (x ) * channels; // queremos a posicao yc a comecar no x
+    
+    unsigned char blue = data_src[pos]; // porque estamos em BGR
+    unsigned char green = data_src[pos + 1];
+    unsigned char red = data_src[pos + 2];
+    
+//    printf("Pixel at (yc = %d) (x-marg=%d, y_center=%d): Red=%d, Green=%d, Blue=%d Posição: %ld\n",blobs[i].yc, x, y_center, red, green, blue, pos); // apenas para testar
+    
+    float h, s, v;
+    ValoresRgb_to_hsv(red, green, blue, &h, &s, &v); // Troca de canais!
+    
+    s = (int)(s * 100); // de 0 a 100%
+    v = (int)(v * 100);
+    
+    
+    // Condição para o mudar de cor, procurar o amarelo que está entre as cores
+    if((h > 30 && h < 40)){
+        blobs[i].ultimaCor = -1;
+    }
+
+    if(blobs[i].ultimaCor == -1){
+        
+        // Preto -> 0
+        if(s > 0 && s <= 20 && v < 25){ // && brilho superior que 40? (testar)
+            vc_cor_encontrada(blobs, i, preto);
+        }
+        // Verde -> 5
+        if((h >= 80 && h <= 120) && (s > 0 && s < 100) && (v > 27 && v < 100)){
+            vc_cor_encontrada(blobs, i, verde);
+        }
+        // azul -> 6
+        if ((h >= 170 && h <= 220) &&  (v > 30 && v < 100)){
+            vc_cor_encontrada(blobs, i, azul);
+        }
+        // Vermelho -> 2
+        if (( (h > 0 && h < 20) || (h >= 300 && h <= 360) ) && (s > 20)) {
+            if(s > 55 && v > 55){
+                // vermelho
+                vc_cor_encontrada(blobs, i, vermelho);
+
+            }else if (s < 55 && v < 55){
+                // castanho
+                vc_cor_encontrada(blobs, i, castanho);
+            }
+        }
+    }
+    return 1;
+}
+
+// Para tornar o código mais limpo e fácil de entender
+int vc_cor_encontrada(OVC *blobs, int i, int cor){
+    if(blobs[i].primeiro == 0){
+        blobs[i].primeiro = cor;
+        blobs[i].ultimaCor = cor;
+    }
+    else if(blobs[i].segundo == 0){
+        blobs[i].segundo = cor;
+        blobs[i].ultimaCor = cor;
+    }
+    else if(blobs[i].terceiro == 0){
+        blobs[i].terceiro = cor;
+        blobs[i].ultimaCor = cor;
+    }
     return 1;
 }
 
@@ -2581,14 +2563,14 @@ void ValoresRgb_to_hsv(unsigned char red, unsigned char green, unsigned char blu
 
     if (max == 0) {
         *s = 0;
-        *h = 0; // undefined
+        *h = 0;
         return;
     }
 
     *s = delta / max;
 
     if (delta == 0) {
-        *h = 0; // undefined
+        *h = 0;
         return;
     }
 
